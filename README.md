@@ -1,2 +1,2 @@
-# TargetDetection_AMC
-Create graspable target detection for the SCAR-E Robot
+# SRL_GraspableTargetDetection
+Create graspable target detection for legged robot
