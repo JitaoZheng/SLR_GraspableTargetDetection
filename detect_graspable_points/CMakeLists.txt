@@ -16,6 +16,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   pcl_ros
+  sensor_msgs
+  pcl_conversions
+  visualization_msgs
+
 )
 include_directories("/usr/include/eigen3")
 include_directories("/home/j02-scare2/libInterpolate/src/libInterpolate")
@@ -35,7 +39,7 @@ include_directories("/home/j02-scare2/libInterpolate/src/libInterpolate")
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS roscpp rospy std_msgs tf pcl_ros
+  CATKIN_DEPENDS roscpp rospy std_msgs tf pcl_ros sensor_msgs pcl_conversions visualization_msgs 
 #  DEPENDS system_lib
 )
 
@@ -67,9 +71,15 @@ add_library(${PROJECT_NAME}
 
 # add_executable(ps3_${PROJECT_NAME}_test src/ps3_${PROJECT_NAME}/ps3_${PROJECT_NAME}.cpp)
 
+
 ## Specify libraries to link a library or executable target against
  target_link_libraries(${PROJECT_NAME}_main
    ${catkin_LIBRARIES}
   #  ${PCL_LIBRARIES}
  )
+ 
+add_executable(publish_pointcloud2 src/publish_pointcloud2.cpp)
+
+
+target_link_libraries(publish_pointcloud2 ${catkin_LIBRARIES})
 

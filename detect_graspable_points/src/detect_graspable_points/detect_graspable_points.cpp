@@ -10,6 +10,9 @@
 
 #include "detect_graspable_points/detect_graspable_points.hpp"
 #include <pcl/filters/filter.h>
+#include <unistd.h>
+#include <stdio.h>
+
 
 /*! ******************************
  ***       Constructor       *****
@@ -71,6 +74,7 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
   // ************************** //
   
   cout << "start processing" << endl;
+  printf("Current working dir: %s\n", get_current_dir_name());
 
   auto start_overall = std::chrono::high_resolution_clock::now();
   
@@ -191,7 +195,7 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
           cout <<"finished detecting."<< endl;
 
 
-          peaksPub.publish(peak_coordinates);
+          //peaksPub.publish(peak_coordinates);
         }
 
         // ****** Voxelize ******* //
@@ -297,7 +301,7 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
 
     // combine Graspability maxima with convex shape analysis. output the intersection of both.
     // Load the PCD file
-    pcl::io::loadPCDFile<pcl::PointXYZRGB>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/peak_pcd.pcd", peak_cloud);
+    pcl::io::loadPCDFile<pcl::PointXYZRGB>("../catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/peak_pcd.pcd", peak_cloud);
 
     results_of_combined_analysis = combinedAnalysis(graspable_points_after_retransform, peak_cloud, distance_threshold, matching_settings);
 
@@ -1070,7 +1074,7 @@ std::vector<std::vector<std::vector<int>>> detect_graspable_points::creategrippe
     }
 
     // Save the mask for visualization (best using python!)
-    std::string filename = "/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/GripperMask_hubrobo.csv";
+    std::string filename = "../catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/GripperMask_hubrobo.csv";
     save3DVectorToFile(gripper_mask, filename); 
 
     return gripper_mask;
@@ -1159,7 +1163,7 @@ void detect_graspable_points::detectTerrainPeaks(pcl::PointCloud<pcl::PointXYZ> 
 
     // Save as pcd
     pcl::PCDWriter writer;
-    writer.write<pcl::PointXYZRGB>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/peak_pcd.pcd", peak_visualization_cloud);
+    writer.write<pcl::PointXYZRGB>("../catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/peak_pcd.pcd", peak_visualization_cloud);
     cout << "Saved " << peak_visualization_cloud.size () << " data points to peak_pcd.pcd." << endl;
 
     //return cloud_msg;
@@ -1317,7 +1321,7 @@ vector<vector<int>> detect_graspable_points::voxel_matching(vector<vector<vector
         
 
         //cout << "graspability:" << searching_solid_voxels_map[3][index_of_voxel_being_compared]  << endl;
-        cout << "Number of voxel being compared: " << index_of_voxel_being_compared <<"/"<< number_of_solid_voxels_in_searching_voxel_array <<endl;
+        //cout << "Number of voxel being compared: " << index_of_voxel_being_compared <<"/"<< number_of_solid_voxels_in_searching_voxel_array <<endl;
 
     }
     

@@ -1,7 +1,7 @@
 /*!
  * \file detect_graspable_points.hpp
  * \author Naomasa Takada, Jitao Zheng
- * \brief Describes the header of the pointcloud2 to float.
+ * \brief Describes the header of graspable target detection algorithm.
  */
 
 #ifndef DETECT_GRASPABLE_POINTS_HPP

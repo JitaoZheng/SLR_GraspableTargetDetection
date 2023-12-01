@@ -1,4 +1,6 @@
 
+#include <iostream> 
+#include <fstream> 
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -23,7 +25,8 @@ int main(int argc, char **argv)
     ros::Rate loop_rate(1);
 
     while (ros::ok())
-    {
+    {   
+
         // Create a point cloud
         pcl::PointCloud<pcl::PointXYZ> cloud;
         pcl::PointCloud<pcl::PointXYZRGB> peaks;
@@ -33,36 +36,36 @@ int main(int argc, char **argv)
 
         // ****** Scene 1 ******* //
 
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/scanned_cloud_primitive.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/scanned_cloud_primitive.pcd",cloud);
 
         // ****** Scene 2 ******* //
 
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/simulated_cloud.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/simulated_cloud_pre-scan.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/simulated_cloud.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/simulated_cloud_pre-scan.pcd",cloud);
 
         // ****** Scene 3 ******* //
 
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/scanned_cloud_Apr8.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/scanned_cloud_Apr8.pcd",cloud);
 
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/testfield_apr8_upscaled.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/testfield_apr8_upscaled.pcd",cloud);
 
 
         // ****** Scene 4 ******* //
 
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/scanned_cloud_realtime_1.5x.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/Artificial_rocks_pose_1.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/artificial_rocks.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/scanned_cloud_realtime.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/scanned_cloud_realtime_1.5x.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/Artificial_rocks_pose_1.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/artificial_rocks.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/scanned_cloud_realtime.pcd",cloud);
 
         // ****** HubRobo Maps (small maps, set voxel size to 0.001!) ******* //
 
-        pcl::io::loadPCDFile<pcl::PointXYZ>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/leaning_bouldering_holds.pcd",cloud);
+        pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/leaning_bouldering_holds.pcd",cloud);
 
 
         // ****** Cloud of curvatures ******* //
         // Remove that if the bug in curvature detection is fixed
 
-        pcl::io::loadPCDFile<pcl::PointXYZRGB>("/home/jitao/catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/peak_pcd.pcd",peaks);
+        pcl::io::loadPCDFile<pcl::PointXYZRGB>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/peak_pcd.pcd",peaks);
 
         // Convert the point cloud to a ROS message
         sensor_msgs::PointCloud2 output1;
