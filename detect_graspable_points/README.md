@@ -2,6 +2,8 @@
 
 Author(s) and maintainer(s):
 
+* Jitao Zheng (jitao.zheng@tum.de)
+  
 * Ringeval-Meusnier Antonin (ringeval-meusnier.antonin.camille.charles.s3@dc.tohoku.ac.jp)
 
 * Taku Okawara (taku.okawara.t3 at dc.tohoku.ac.jp)
