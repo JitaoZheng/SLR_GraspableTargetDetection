@@ -64,7 +64,7 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
     "off",  //trying to find the peaks of the terrain? on or off 
     0.03, // [m] Searching radius for the curvature (SCAR-E: 0.09, HubRobo: 0.03)
     3, // size of extra sheet above the top layer of gripper mask (H_add)(SCAR-E: 1)
-    90 // Graspability threshold. Above which we can call it graspable with certainty
+    90 // Graspability threshold. Above which we can call it graspable with great certainty
   };
 
 
