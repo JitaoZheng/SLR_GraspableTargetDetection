@@ -100,7 +100,7 @@ Now you should see the point cloud showing up in RVIZ.
 Next, we dive more and more into the code. You will need to modify the code in case you have another point cloud you want to test or you have different gripper mask geometries. First, open up the code in Visual Studio in a new terminal.
 
 ```
-cd catkin_ws/src/SRL_GraspableTargetDetection/
+cd ~/catkin_ws/src/SRL_GraspableTargetDetection/
 code .
 ```
 
