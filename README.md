@@ -68,7 +68,7 @@ cd catkin_ws
 source ~/catkin_ws/devel/setup.bash
 rosrun detect_graspable_points publish_pointcloud2
 ```
-Now, a point cloud in *.pcd* format will be published once per second under the topic `merged_pcd` in the `regression_plane_frame` coordinate frame.
+Now, a point cloud in *.pcd* format will be published once per second as `sensor_msgs/PointCloud2` message under the topic `/merged_pcd` in the `regression_plane_frame` coordinate frame.
 
 *Terminal 3*
 
