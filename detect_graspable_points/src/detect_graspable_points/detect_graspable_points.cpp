@@ -712,6 +712,8 @@ void detect_graspable_points::pcd_interpolate (const pcl::PointCloud<pcl::PointX
   // create interpolator
   // .setData add all the known values x,y,z (f(x,y)=z) to the interpolator class
   _2D::LinearDelaunayTriangleInterpolator<double> delaunay_interpolator;
+  //_2D::BicubicInterpolator<double> delaunay_interpolator;
+
   delaunay_interpolator.setData(x,y,z);
 
   // operation for homogenization and keeping as many points as in input
