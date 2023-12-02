@@ -1,5 +1,7 @@
 # SRL_GraspableTargetDetection
-Create graspable target detection for legged robot
+Geometry based graspable target detection for legged robots.
+
+Originated in the Space Robotics Lab (SRL) of the Tohoku University. Based on ClimbLab (Uno et al. 2022).
 
 ## Authors and Maintainers
 
