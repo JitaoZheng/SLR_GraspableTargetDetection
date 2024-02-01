@@ -45,7 +45,7 @@ cd ..
 
 catkin_make
 ```
-If you don't have yet installed Point Cloud Library (PCL), you can install it by typing:
+If you haven't yet installed Point Cloud Library (PCL), you can install it by typing:
 
 ```
 sudo apt install libpcl-dev
