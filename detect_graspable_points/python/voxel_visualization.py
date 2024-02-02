@@ -6,7 +6,8 @@ import plotly.express as px
 
 
 
-vector3d_gripper_cpp = pd.read_csv("/home/jitao/Documents/Results/GripperMask.csv", names=["x","y","z"])
+vector3d_gripper_cpp = pd.read_csv("../pcd_data/GripperMask.csv", names=["x","y","z"])
+#vector3d_gripper_cpp = pd.read_csv("../pcd_data/ControlVolume.csv", names=["x","y","z"])
 
 
 #vector3d_gripper_cpp = pd.read_csv("/home/jitao/Documents/Results/Voxel_array/GripperMask_matlab_2.csv", names=["x","y","z"])
@@ -16,8 +17,14 @@ vector3d_gripper_cpp.drop_duplicates(inplace=True)
 print(vector3d_gripper_cpp.shape[0])
 def visualize_3d(vector_3d, size_mask=1):
     fig = px.scatter_3d(vector_3d, x='x', y='y', z='z')
-    fig.update_scenes(aspectmode='data')
-    fig.update_traces(marker=dict(size=10,
+    fig.update_layout(scene=dict(
+        xaxis=dict(showticklabels=False),
+        yaxis=dict(showticklabels=False),
+        zaxis=dict(showticklabels=False),
+    ))
+    #fig.update_scenes(xaxis_visible=False, yaxis_visible=False,zaxis_visible=False)
+    fig.update_scenes(aspectmode='data', bgcolor='white')
+    fig.update_traces(marker=dict(size=12,
     				symbol="square",
                                 line=dict(width=2,
                                             color='DarkSlateGrey')),

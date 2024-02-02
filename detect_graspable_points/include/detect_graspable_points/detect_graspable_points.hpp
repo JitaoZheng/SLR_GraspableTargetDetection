@@ -212,7 +212,7 @@ private:
 	 */	
 
 	
-	vector<vector<vector<int>>> vox_extract(const vector<vector<vector<int>>>& voxel_array ,const vector<int>& position_reference_point, const vector<int>& size_extracting);
+	vector<vector<vector<int>>> vox_extract(const vector<vector<vector<int>>>& voxel_array ,const vector<int>& position_reference_point, const vector<int>& size_extracting, const float palm_diameter, const float closing_angle, const float voxel_size);
  	/**
 	 * \function name : vox_extract() 
 	 * \brief : extracts an array of voxels of the specified size from a larger voxel array.
@@ -283,7 +283,7 @@ private:
 
 
 
-	vector<vector<int>> voxel_matching(vector<vector<vector<int>>>& terrain_matrix, const vector<vector<vector<int>>>& gripper_mask, const MatchingSettings& matching_settings);
+	vector<vector<int>> voxel_matching(vector<vector<vector<int>>>& terrain_matrix, const vector<vector<vector<int>>>& gripper_mask, const MatchingSettings& matching_settings, GripperParam gripper_param);
 	/**
 	 * \function name : voxel_matching() 
 	 * \brief : finds subset voxel arrays in a major voxel array that matches a gripper mask voxel array.

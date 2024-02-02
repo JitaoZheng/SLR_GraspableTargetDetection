@@ -49,6 +49,26 @@ int main(int argc, char **argv)
 
         //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/testfield_apr8_upscaled.pcd",cloud);
 
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/boulder_wall_poisson.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/boulder_wall_testfield_dense.pcd",cloud);
+
+        // ****** Testing the ICP ******* //
+
+        // Linear movement
+
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5_0.0.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5_0.0_-0.5.pcd",cloud);
+        pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5_0.0_-0.5_-1.0.pcd",cloud);
+
+        // Circular movement
+
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/circular_movement/concatenated_0.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/circular_movement/concatenated_50.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/circular_movement/concatenated_75.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/circular_movement/concatenated_100.pcd",cloud);
+
 
         // ****** Scene 4 ******* //
 
@@ -59,7 +79,10 @@ int main(int argc, char **argv)
 
         // ****** HubRobo Maps (small maps, set voxel size to 0.001!) ******* //
 
-        pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/leaning_bouldering_holds.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/leaning_bouldering_holds.pcd",cloud);
+        
+        // ****** Test Realtime sample ******* //
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/realtime.pcd",cloud);
 
 
         // ****** Cloud of curvatures ******* //

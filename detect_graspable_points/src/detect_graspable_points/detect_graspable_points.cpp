@@ -10,8 +10,8 @@
 
 #include "detect_graspable_points/detect_graspable_points.hpp"
 #include <pcl/filters/filter.h>
-#include <unistd.h>
-#include <stdio.h>
+//#include <unistd.h>
+//#include <stdio.h>
 
 
 /*! ******************************
@@ -23,24 +23,24 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
   // ****** PARAMETERS ******* //
 
   // ****** SCAR-E Gripper ******* //
-/* 
+
   GripperParam gripper_param = { //in [mm]!
 		71, // palm_diameter
 		92, // palm_diameter_of_finger_joints
 		40, // finger_length
 		41, // spine_length
 		5, // spine_depth
-		85, // opening_angle
+		80, // opening_angle
 		10, // closing_angle
 		136, // opening_spine_radius, the distance from the center of palm to the furthest point of the spines
 		5, // opening_spine_depth
 		90, // closing_height, Vertical distance between the tip of the spine and the bottom of the palm when closed
 		4, // margin_of_top_solid_diameter
 		2, // inside_margin_of_bottom_void_diameter
-	}; */
+	}; 
 
   // ****** HubRobo Gripper ******* //
-
+/* 
   GripperParam gripper_param = { //in [mm]!
 		32, // palm_diameter
 		28, // palm_diameter_of_finger_joints
@@ -55,26 +55,26 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
 		4, // margin_of_top_solid_diameter
 		2, // inside_margin_of_bottom_void_diameter
 	};
-
+ */
   // ****** General Parameters ******* //
 
   MatchingSettings matching_settings ={
-    0.001, // voxel size [m]
-    100, // threshold of numbers of solid voxels within the subset (TSV) (SCAR-E: 120)
-    "on", // delete the targets whose z positions are lower than a limit value: on or off
-    0.01, // [m] Lower threshold of targets (Apr8_realtime: 0.025, Scanned: -0.05, Simulated: -0.07, primitive: 0.01, leaning_bouldering_holds: 0.01)
+    0.005, // voxel size [m]
+    120, // threshold of numbers of solid voxels within the subset (TSV) (SCAR-E: 120)
+    "off", // delete the targets whose z positions are lower than a limit value: on or off
+    -0.05, // [m] Lower threshold of targets (Apr8_realtime: 0.025, Artificial rocks: -0.05, slopes: -0.07, primitive: 0.01, leaning_bouldering_holds: 0.01)
     "on",  //interpolation: "on" or "off"
     "off",  //trying to find the peaks of the terrain? on or off 
-    0.03, // [m] Searching radius for the curvature (SCAR-E: 0.09, HubRobo: 0.03)
+    0.09, // [m] Searching radius for the curvature (SCAR-E: 0.09, HubRobo: 0.03)
     3, // size of extra sheet above the top layer of gripper mask (H_add)(SCAR-E: 1)
-    90 // Graspability threshold. Above which we can call it graspable with great certainty
+    80 // Graspability threshold. Above which we can call it graspable with great certainty
   };
 
 
   // ************************** //
   
   cout << "start processing" << endl;
-  printf("Current working dir: %s\n", get_current_dir_name());
+  //printf("Current working dir: %s\n", get_current_dir_name());
 
   auto start_overall = std::chrono::high_resolution_clock::now();
   
@@ -261,7 +261,7 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
     vector<vector<int>> graspable_points(0, std::vector<int>(0,0));
     auto start_matching = std::chrono::high_resolution_clock::now();
 
-    graspable_points = voxel_matching(voxel_matrix, gripper_mask, matching_settings);
+    graspable_points = voxel_matching(voxel_matrix, gripper_mask, matching_settings, gripper_param);
 
     auto stop_matching = std::chrono::high_resolution_clock::now();
     auto duration_matching = std::chrono::duration_cast<std::chrono::microseconds>(stop_matching - start_matching);
@@ -649,7 +649,7 @@ void detect_graspable_points::pcd_transform ( const pcl::PointCloud<pcl::PointXY
 
 	float innerproduct_of_centroid_normal_vector = centroid_vector_of_plane3f.dot(normal_vector_of_plane);
 
-  /* 
+   /* 
 	if (innerproduct_of_centroid_normal_vector > 0) // changes direction of vector to be from ground to sky if needed
   {
 		normal_vector_of_plane = - normal_vector_of_plane;
@@ -954,7 +954,7 @@ vector<vector<vector<int>>> detect_graspable_points::vox_clip(const int x, const
 
 
 // ****** VOXEL EXTRACT ******* //
-
+/* 
 vector<vector<vector<int>>> detect_graspable_points::vox_extract(const vector<vector<vector<int>>>& voxel_array,
                                                         const vector<int>& position_reference_point,
                                                         const vector<int>& size_extracting) {
@@ -979,6 +979,60 @@ vector<vector<vector<int>>> detect_graspable_points::vox_extract(const vector<ve
 
     return extracted_voxel_array;
 }
+ */
+
+vector<vector<vector<int>>> detect_graspable_points::vox_extract(const vector<vector<vector<int>>>& voxel_array,
+                                                        const vector<int>& position_reference_point,
+                                                        const vector<int>& size_extracting,
+                                                        const float palm_diameter,
+                                                        const float closing_angle,
+                                                        const float voxel_size) {
+
+    int size_x = size_extracting[0];
+    int size_y = size_extracting[1];
+    int size_z = size_extracting[2];
+
+    int ref_x = position_reference_point[0];
+    int ref_y = position_reference_point[1];
+    int ref_z = position_reference_point[2];
+
+    float ratio = 1.0f / (voxel_size * 1000.0f);
+
+    //float palm_diameter = gripper_param.palm_diameter * ratio;
+    //float margin_of_top_solid_diameter = gripper_param.margin_of_top_solid_diameter * ratio;
+    float gripper_mask_top_solid_radius = std::round(palm_diameter * ratio / 2);
+    //float gripper_mask_clearance = std::round((size_x - palm_diameter) / 2 * std::tan((90 - 80) * (M_PI / 180.0)));
+
+    vector<vector<vector<int>>> extracted_voxel_array(size_x, vector<vector<int>>(size_y, vector<int>(size_z, 0)));
+    vector<vector<vector<int>>> control_volume(size_x, vector<vector<int>>(size_y, vector<int>(size_z, 0)));
+
+
+    for (int z = 0; z < size_z; ++z) {
+      float outer_unreachable_radius = std::round(gripper_mask_top_solid_radius + std::sqrt(2 * (size_z-1)/cos(closing_angle * (M_PI / 180.0)) * (z) - std::pow((z), 2)));
+      
+        for (int x = 0; x < size_x; ++x) {
+            for (int y = 0; y < size_y; ++y) {
+              float radius = std::sqrt(std::pow(size_x/2 - x, 2) + std::pow(size_y/2 - y, 2));
+                if(radius <= outer_unreachable_radius){
+                    
+                    extracted_voxel_array[x][y][z] = voxel_array[ref_x + x][ref_y + y][ref_z + z];
+
+                    //control_volume[x][y][z] = 1;
+
+
+                }
+            }
+        }
+    }
+
+    // Save the mask for visualization (best using python!)
+    //std::string filename = "../catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/ControlVolume.csv";
+    //save3DVectorToFile(control_volume, filename); 
+
+    
+
+    return extracted_voxel_array;
+}
 
 
 
@@ -993,7 +1047,7 @@ std::vector<std::vector<std::vector<int>>> detect_graspable_points::creategrippe
     float ratio = 1.0f / (voxel_size * 1000.0f);
 
     // Reduce or magnify the gripper's parameters to fit voxel's dimension. Change demensions from [mm] to [voxels]
-    float palm_diameter = std::round(gripper_param.palm_diameter * ratio);
+    float palm_diameter = gripper_param.palm_diameter * ratio;
     float palm_diameter_of_finger_joints = std::round(gripper_param.palm_diameter_of_finger_joints * ratio);
     float finger_length = std::round(gripper_param.finger_length * ratio);
     float spine_length = std::round(gripper_param.spine_length * ratio);
@@ -1001,13 +1055,13 @@ std::vector<std::vector<std::vector<int>>> detect_graspable_points::creategrippe
     float opening_spine_radius = std::round(gripper_param.opening_spine_radius * ratio);
     float opening_spine_depth = std::round(gripper_param.opening_spine_depth * ratio);
     float closing_height = std::round(gripper_param.closing_height * ratio);
-    float margin_of_top_solid_diameter = std::round(gripper_param.margin_of_top_solid_diameter * ratio);
+    float margin_of_top_solid_diameter = gripper_param.margin_of_top_solid_diameter * ratio;
     float inside_margin_of_bottom_void_diameter = std::round(gripper_param.inside_margin_of_bottom_void_diameter * ratio);
 
     // Set the gripper-mask size
     float gripper_mask_half_size = (palm_diameter_of_finger_joints / 2) + finger_length + spine_length;
     float gripper_mask_size = 2 * gripper_mask_half_size;
-    float gripper_mask_height = closing_height;
+    float gripper_mask_height = std::round(closing_height);
 
     // Calculate the parameters to determine solid area and void area
     float gripper_mask_top_solid_radius = std::round((palm_diameter + margin_of_top_solid_diameter) / 2);
@@ -1023,8 +1077,9 @@ std::vector<std::vector<std::vector<int>>> detect_graspable_points::creategrippe
     float inner_unreachable_radius = 0;
     float distance_from_center_of_layer = 0;
 
-    //cout << "gripper_mask_clearance: " << gripper_mask_clearance << endl;
-    //cout << "gripper_mask_bottom_void_radius: " << gripper_mask_bottom_void_radius << endl;
+    cout << "gripper_mask_clearance: " << gripper_mask_clearance << endl;
+    cout << "gripper_mask_bottom_void_radius: " << gripper_mask_bottom_void_radius << endl;
+    cout << "gripper_mask_top_solid_radius: " << gripper_mask_top_solid_radius << endl;
 
     // Make the gripper_mask by setting the elements of 1.
     for (int z_subscript = 1; z_subscript < gripper_mask_height + 1; ++z_subscript) {
@@ -1032,35 +1087,36 @@ std::vector<std::vector<std::vector<int>>> detect_graspable_points::creategrippe
         // Calculate radius of inner cone and outer solid and void area.
         grippable_radius = std::round(gripper_mask_top_solid_radius + (z_subscript-1)/std::tan((90 - gripper_param.opening_angle) * (M_PI / 180.0)));
         outer_unreachable_radius = std::round(gripper_mask_top_solid_radius + std::sqrt(2 * gripper_mask_height/cos(gripper_param.closing_angle * (M_PI / 180.0)) * (gripper_mask_height-(z_subscript-1)) - std::pow(gripper_mask_height-(z_subscript-1), 2)));
-        inner_unreachable_radius = std::round(std::sqrt(2*gripper_mask_bottom_void_radius*(gripper_mask_bottom_void_radius-gripper_mask_height+(z_subscript-1))-std::pow((gripper_mask_bottom_void_radius-gripper_mask_height+(z_subscript-1)),2)));
+        inner_unreachable_radius = std::round(std::sqrt(2*1.5*gripper_mask_bottom_void_radius*((gripper_mask_height-2.5*gripper_mask_bottom_void_radius)+(z_subscript-1))-std::pow(((gripper_mask_height-2.5*gripper_mask_bottom_void_radius)+(z_subscript-1)),2)));
         //unreachble_radius = gripper_mask_half_size - std::round(gripper_mask_half_size - (opening_spine_radius + spine_depth)) * (z_subscript) / (opening_spine_depth - 1);
 
-        for (int y_subscript = 1; y_subscript < gripper_mask_size + 1; ++y_subscript) {
-            for (int x_subscript = 1; x_subscript < gripper_mask_size + 1; ++x_subscript) {
+        for (int y_subscript = 0; y_subscript < gripper_mask_size; ++y_subscript) {
+            for (int x_subscript = 0; x_subscript < gripper_mask_size; ++x_subscript) {
                 
                 // Caculate the distance from center of layer.
-                distance_from_center_of_layer = std::sqrt(std::pow(gripper_mask_half_size + 1 - x_subscript, 2) + std::pow(gripper_mask_half_size + 1 - y_subscript, 2));
+                distance_from_center_of_layer = std::sqrt(std::pow(gripper_mask_half_size - x_subscript, 2) + std::pow(gripper_mask_half_size - y_subscript, 2));
                 
                 // Judges whether it is a solid(1) region or not.
                 if ((z_subscript <= gripper_mask_clearance && distance_from_center_of_layer <= grippable_radius) ||
-                    (z_subscript > gripper_mask_clearance && z_subscript <= (gripper_mask_height-gripper_mask_bottom_void_radius) 
-                    && distance_from_center_of_layer < gripper_mask_half_size
+                    (z_subscript > gripper_mask_clearance && z_subscript <= (gripper_mask_height-gripper_mask_bottom_void_radius)
+                    && distance_from_center_of_layer <= outer_unreachable_radius
+                    
                     ) ||
                     (z_subscript > (gripper_mask_height-gripper_mask_bottom_void_radius) && z_subscript != gripper_mask_height 
                     //&& distance_from_center_of_layer < gripper_mask_half_size 
-                    //&& distance_from_center_of_layer < outer_unreachable_radius 
+                    && distance_from_center_of_layer <= outer_unreachable_radius 
                     && distance_from_center_of_layer > inner_unreachable_radius
                     ) ||
                     //(z_subscript > (gripper_mask_height-gripper_mask_bottom_void_radius) && distance_from_center_of_layer > inner_unreachable_radius)
                     //(z_subscript > gripper_mask_clearance && z_subscript != gripper_mask_height) ||
                     (z_subscript == gripper_mask_height && distance_from_center_of_layer > gripper_mask_bottom_void_radius 
                     //&& distance_from_center_of_layer < gripper_mask_half_size
-                    //&& distance_from_center_of_layer < outer_unreachable_radius
+                    && distance_from_center_of_layer <= outer_unreachable_radius
                     ))
                     {
                     
                     // Set those element as 1.
-                    gripper_mask[x_subscript - 1][y_subscript - 1][gripper_mask_height - z_subscript] = 1;
+                    gripper_mask[x_subscript][y_subscript][gripper_mask_height - z_subscript] = 1;
                     }
             }
         }
@@ -1076,7 +1132,7 @@ std::vector<std::vector<std::vector<int>>> detect_graspable_points::creategrippe
     }
 
     // Save the mask for visualization (best using python!)
-    std::string filename = "../catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/GripperMask_hubrobo.csv";
+    std::string filename = "../catkin_ws/src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/GripperMask.csv";
     save3DVectorToFile(gripper_mask, filename); 
 
     return gripper_mask;
@@ -1161,7 +1217,7 @@ void detect_graspable_points::detectTerrainPeaks(pcl::PointCloud<pcl::PointXYZ> 
     cloud_msg.header.frame_id="regression_plane_frame";
     cloud_msg.header.stamp = ros::Time::now();
 
-    cout <<"peaks detected"<< endl;
+    cout <<"curvature detected."<< endl;
 
     // Save as pcd
     pcl::PCDWriter writer;
@@ -1175,7 +1231,7 @@ void detect_graspable_points::detectTerrainPeaks(pcl::PointCloud<pcl::PointXYZ> 
 // ****** VOXEL MATCHING ******* //
 
 
-vector<vector<int>> detect_graspable_points::voxel_matching(vector<vector<vector<int>>>& terrain_matrix, const vector<vector<vector<int>>>& gripper_mask, const MatchingSettings& matching_settings)
+vector<vector<int>> detect_graspable_points::voxel_matching(vector<vector<vector<int>>>& terrain_matrix, const vector<vector<vector<int>>>& gripper_mask, const MatchingSettings& matching_settings, GripperParam gripper_param)
 {
 
     // ****** preparations ******* //
@@ -1260,10 +1316,16 @@ vector<vector<int>> detect_graspable_points::voxel_matching(vector<vector<vector
                                             {subscripts_of_searching_solid_voxels.x[index_of_voxel_being_compared],
                                             subscripts_of_searching_solid_voxels.y[index_of_voxel_being_compared],
                                             subscripts_of_searching_solid_voxels.z[index_of_voxel_being_compared]},
-                                            size_of_gripper_mask);
+                                            size_of_gripper_mask,
+                                            gripper_param.palm_diameter,
+                                            gripper_param.closing_angle,
+                                            matching_settings.voxel_size);
 
+      
+        //break;
         // Initialize and count the number of voxels inside subset
         int number_of_matching_voxels = 0;
+
         for (const auto& row : subset_of_voxel_array) {
             for (const auto& col : row) {
                 number_of_matching_voxels += std::accumulate(col.begin(), col.end(), 0);
@@ -1294,8 +1356,8 @@ vector<vector<int>> detect_graspable_points::voxel_matching(vector<vector<vector
             }
           }
         }
-        */
         
+         */
         // Compare the two arrays subset and gripper mask and check whether they match or not
         // returns the graspability score, which is an indicator for the suitability for grasping at this point
         float graspability = vox_evaluate(number_of_matching_voxels, subset_of_voxel_array, gripper_mask);

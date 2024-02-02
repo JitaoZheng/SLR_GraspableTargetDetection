@@ -1,0 +1,42 @@
+<!DOCTYPE MeshLabDocument>
+<MeshLabProject>
+ <MeshGroup>
+  <MLMesh label="-1_0_0.42.ply" visible="1" filename="-1_0_0.42.ply">
+   <MLMatrix44>
+1 0 0 0 
+0 1 0 0 
+0 0 1 0 
+0 0 0 1 
+</MLMatrix44>
+   <RenderingOption solidColor="192 192 192 255" wireWidth="1" pointColor="131 149 69 255" wireColor="64 64 64 255" pointSize="1" boxColor="234 234 234 255">000111000000000000000100000001001000001010100000000100111011110000001001</RenderingOption>
+  </MLMesh>
+  <MLMesh label="0_-1.5_0.42.ply" visible="1" filename="0_-1.5_0.42.ply">
+   <MLMatrix44>
+1 0 0 0 
+0 1 0 0 
+0 0 1 0 
+0 0 0 1 
+</MLMatrix44>
+   <RenderingOption solidColor="192 192 192 255" wireWidth="1" pointColor="131 149 69 255" wireColor="64 64 64 255" pointSize="1" boxColor="234 234 234 255">000111000000000000000100000001001000001010100000000100111011110000001001</RenderingOption>
+  </MLMesh>
+  <MLMesh label="0_1.5_0.42.ply" visible="1" filename="0_1.5_0.42.ply">
+   <MLMatrix44>
+1 0 0 0 
+0 1 0 0 
+0 0 1 0 
+0 0 0 1 
+</MLMatrix44>
+   <RenderingOption solidColor="192 192 192 255" wireWidth="1" pointColor="131 149 69 255" wireColor="64 64 64 255" pointSize="1" boxColor="234 234 234 255">000111000000000000000100000001001000001010100000000100111011110000001001</RenderingOption>
+  </MLMesh>
+  <MLMesh label="1.5_0_0.42.ply" visible="1" filename="1.5_0_0.42.ply">
+   <MLMatrix44>
+1 0 0 0 
+0 1 0 0 
+0 0 1 0 
+0 0 0 1 
+</MLMatrix44>
+   <RenderingOption solidColor="192 192 192 255" wireWidth="1" pointColor="131 149 69 255" wireColor="64 64 64 255" pointSize="1" boxColor="234 234 234 255">000111000000000000000100000001001000001010100000000100111011110000001001</RenderingOption>
+  </MLMesh>
+ </MeshGroup>
+ <RasterGroup/>
+</MeshLabProject>
