@@ -1,5 +1,7 @@
 # SRL_GraspableTargetDetection
-Create graspable target detection for legged robot
+Geometry based graspable target detection for legged robots.
+
+Originated in the Space Robotics Lab (SRL) of the Tohoku University. Based on ClimbLab (Uno et al. 2022).
 
 ## Authors and Maintainers
 
@@ -43,7 +45,7 @@ cd ..
 
 catkin_make
 ```
-If you don't have yet installed Point Cloud Library (PCL), you can install it by typing:
+If you haven't yet installed Point Cloud Library (PCL), you can install it by typing:
 
 ```
 sudo apt install libpcl-dev
@@ -68,7 +70,7 @@ cd catkin_ws
 source ~/catkin_ws/devel/setup.bash
 rosrun detect_graspable_points publish_pointcloud2
 ```
-Now, a point cloud in *.pcd* format will be published once per second under the topic `merged_pcd` in the `regression_plane_frame` coordinate frame.
+Now, a point cloud in *.pcd* format will be published once per second as `sensor_msgs/PointCloud2` message under the topic `/merged_pcd` in the `regression_plane_frame` coordinate frame.
 
 *Terminal 3*
 
@@ -100,7 +102,7 @@ Now you should see the point cloud showing up in RVIZ.
 Next, we dive more and more into the code. You will need to modify the code in case you have another point cloud you want to test or you have different gripper mask geometries. First, open up the code in Visual Studio in a new terminal.
 
 ```
-cd catkin_ws/src/SRL_GraspableTargetDetection/
+cd ~/catkin_ws/src/SRL_GraspableTargetDetection/
 code .
 ```
 
