@@ -58,16 +58,19 @@ int main(int argc, char **argv)
 
         //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0.pcd",cloud);
         //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5_0.0.pcd",cloud);
+        pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5_0.0.pcd",cloud);
         //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5_0.0_-0.5.pcd",cloud);
-        pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5_0.0_-0.5_-1.0.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5_0.0_-0.5_-1.0.pcd",cloud);
 
         // Circular movement
 
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/circular_movement/concatenated_0.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/circular_movement/concatenated_50.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/circular_movement/concatenated_75.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/circular_movement/concatenated_100.pcd",cloud);
+        
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/meshlab_circular/circular_50.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/meshlab_circular/circular_60.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/meshlab_circular/circular_70.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/meshlab_circular/circular_80.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/meshlab_circular/circular_90.pcd",cloud);
+        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/meshlab_circular/circular_100.pcd",cloud);
 
 
         // ****** Scene 4 ******* //
@@ -97,10 +100,10 @@ int main(int argc, char **argv)
         pcl::toROSMsg(peaks, output2);
 
         // Set the header information
-        output1.header.frame_id = "regression_plane_frame";
+        output1.header.frame_id = "camera_depth_optical_frame";
         output1.header.stamp = ros::Time::now();
 
-        output2.header.frame_id = "regression_plane_frame";
+        output2.header.frame_id = "camera_depth_optical_frame";
         output2.header.stamp = ros::Time::now();
 
         // Publish the point cloud

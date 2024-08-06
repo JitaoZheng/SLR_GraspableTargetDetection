@@ -100,7 +100,7 @@ private:
 
 
 	
-	void pcd_transform ( const pcl::PointCloud<pcl::PointXYZ>  raw_pcd, pcl::PointCloud<pcl::PointXYZ> &transformed_point_cloud, Eigen::Vector4f &centroid_vector_of_plane, Eigen::Matrix3f &rotation_matrix);
+	void pcd_transform ( const pcl::PointCloud<pcl::PointXYZ>  &raw_pcd, pcl::PointCloud<pcl::PointXYZ> &transformed_point_cloud, Eigen::Vector4f &centroid_vector_of_plane, Eigen::Matrix3f &rotation_matrix);
 	/**
 	 * \function name : pcd_transform()
 	 * \brief : transform coordinate of pointcloud to terrain base frame
@@ -299,7 +299,7 @@ private:
 
 
 
-	std::vector<std::vector<float>> pcd_re_transform(std::vector<std::vector<int>> voxel_coordinates_of_graspable_points, float voxel_size, std::vector<float> offset_vector);
+	std::vector<std::vector<float>> pcd_re_transform(std::vector<std::vector<int>> voxel_coordinates_of_graspable_points, float voxel_size, std::vector<float> offset_vector, Eigen::Matrix3f rotation_matrix, Eigen::Vector4f centroid_vector_of_plane);
 													//Eigen::Matrix3f rotation_matrix, 
 													//Eigen::Vector4f centroid_vector_of_plane, 
 													//std::vector<float> offset_vector
@@ -320,6 +320,8 @@ private:
 
 	sensor_msgs::PointCloud2 combinedAnalysis(const std::vector<std::vector<float>> array, const pcl::PointCloud<pcl::PointXYZRGB> cloud2, float distance_threshold, const MatchingSettings& matching_settings);
 
+	visualization_msgs::MarkerArray visualizeGScore(std::vector<std::vector<float>> array, const MatchingSettings& matching_settings);
+	
 	sensor_msgs::PointCloud2ConstPtr raw_cloud_msg_;
 
   	// Node Handle declaration
@@ -334,6 +336,7 @@ private:
 	ros::Publisher peaksPub = nh.advertise<sensor_msgs::PointCloud2>("peaks_of_convex_surface", 1);
 	ros::Publisher rainbowPub = nh.advertise<sensor_msgs::PointCloud2>("graspability_map", 1);
 	ros::Publisher combinedPub = nh.advertise<sensor_msgs::PointCloud2>("graspable_points_after_combined_criterion", 1);
+	ros::Publisher g_score_pub = nh.advertise<visualization_msgs::MarkerArray>("graspability_score", 1);
 	//ros::Publisher retransformed_point_pub = nh.advertise<sensor_msgs::PointCloud2>("graspable_points", 1);
 	tf2_ros::TransformBroadcaster dynamic_tf;
 };

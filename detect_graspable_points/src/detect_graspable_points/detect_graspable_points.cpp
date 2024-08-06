@@ -62,8 +62,8 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
     0.005, // voxel size [m]
     120, // threshold of numbers of solid voxels within the subset (TSV) (SCAR-E: 120)
     "off", // delete the targets whose z positions are lower than a limit value: on or off
-    -0.05, // [m] Lower threshold of targets (Apr8_realtime: 0.025, Artificial rocks: -0.05, slopes: -0.07, primitive: 0.01, leaning_bouldering_holds: 0.01)
-    "on",  //interpolation: "on" or "off"
+    0.025, // [m] Lower threshold of targets (Apr8_realtime: 0.025, Artificial rocks: -0.05, slopes: -0.07, primitive: 0.01, leaning_bouldering_holds: 0.01)
+    "off",  //interpolation: "on" or "off"
     "off",  //trying to find the peaks of the terrain? on or off 
     0.09, // [m] Searching radius for the curvature (SCAR-E: 0.09, HubRobo: 0.03)
     3, // size of extra sheet above the top layer of gripper mask (H_add)(SCAR-E: 1)
@@ -114,10 +114,27 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
     Eigen::Vector3f normal_vector;
     Eigen::Matrix3f rotation_matrix;
     pcl::PointCloud<pcl::PointXYZ> new_pcl;
+    
+    // cout <<"Done with first declaration " << endl;
+    // Eigen::Vector3f offset_vector_eigen;
+    // std::vector<float> offset_vector(3);
+
+    // cout <<"Done with second declaration " << endl;
 
     auto start_transform = std::chrono::high_resolution_clock::now();
 
+
+
+    
+
     pcd_transform(cloud,new_pcl,centroid_point,rotation_matrix);  // /!\ modified downsampled_points to real cloud data 
+
+    cout <<"Done with transformation " << endl;
+
+    // Assign the Eigen vector elements to the std::vector
+    // offset_vector[0] = offset_vector_eigen[0];
+    // offset_vector[1] = offset_vector_eigen[1];
+    // offset_vector[2] = offset_vector_eigen[2];
 
     auto stop_transform = std::chrono::high_resolution_clock::now();
     auto duration_transform = std::chrono::duration_cast<std::chrono::microseconds>(stop_transform - start_transform);
@@ -135,21 +152,38 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
     relative_pose_between_camera_and_regression_plane.position.y = centroid_point[1];
     relative_pose_between_camera_and_regression_plane.position.z = centroid_point[2];
     Eigen::Quaternionf relative_quat_between_camera_and_regression_plane(rotation_matrix);
-    //cout << "eigen rotation_matrix = " << endl << rotation_matrix << endl << endl << endl;
+    cout << "eigen rotation_matrix = " << endl << rotation_matrix << endl << endl << endl;
+    cout << "Centroid vector = " << endl << centroid_point << endl << endl << endl;
     // considering normalization for avoiding an error
     relative_pose_between_camera_and_regression_plane.orientation.x = relative_quat_between_camera_and_regression_plane.normalized().x();
     relative_pose_between_camera_and_regression_plane.orientation.y = relative_quat_between_camera_and_regression_plane.normalized().y();
     relative_pose_between_camera_and_regression_plane.orientation.z = relative_quat_between_camera_and_regression_plane.normalized().z();
     relative_pose_between_camera_and_regression_plane.orientation.w = relative_quat_between_camera_and_regression_plane.normalized().w();
-    //cout << "geometry_msgs" << relative_pose_between_camera_and_regression_plane << endl << endl;
+    cout << "geometry_msgs"  << endl << relative_pose_between_camera_and_regression_plane << endl << endl;
 
     // set a frame between a camera and the regression_plane calculated by pcd_transform()
     tf_broadcast_from_pose("camera_depth_optical_frame", "regression_plane_frame", relative_pose_between_camera_and_regression_plane);
+    
+    
+    geometry_msgs::Pose relative_pose_between_regression_plane_and_evaluation_frame;
 
+    relative_pose_between_regression_plane_and_evaluation_frame.position.x = -centroid_point[0];
+    relative_pose_between_regression_plane_and_evaluation_frame.position.y = -centroid_point[1];
+    relative_pose_between_regression_plane_and_evaluation_frame.position.z = -centroid_point[2];
+    Eigen::Quaternionf relative_quat_between_regression_plane_and_evaluation_frame(rotation_matrix.transpose());
+
+    // considering normalization for avoiding an error
+    relative_pose_between_regression_plane_and_evaluation_frame.orientation.x = relative_quat_between_regression_plane_and_evaluation_frame.normalized().x();
+    relative_pose_between_regression_plane_and_evaluation_frame.orientation.y = relative_quat_between_regression_plane_and_evaluation_frame.normalized().y();
+    relative_pose_between_regression_plane_and_evaluation_frame.orientation.z = relative_quat_between_regression_plane_and_evaluation_frame.normalized().z();
+    relative_pose_between_regression_plane_and_evaluation_frame.orientation.w = relative_quat_between_regression_plane_and_evaluation_frame.normalized().w();
+    cout << "geometry_msgs" << endl << relative_pose_between_regression_plane_and_evaluation_frame << endl << endl;
+
+    //tf_broadcast_from_pose("regression_plane_frame", "evaluation_frame", relative_pose_between_camera_and_regression_plane);
     // publish the 3D centroid point for debug
-    visualizePoint(centroid_point[0], centroid_point[1], centroid_point[2], "centroid_point", "camera_depth_optical_frame");
+    visualizePoint(centroid_point[0], centroid_point[1], centroid_point[2], "centroid_point", "regression_plane_frame");
   
-    // puvlish the normal vector for debug
+    // publish the normal vector for debug
     Eigen::Vector3f cetroid_point_3f;  
     cetroid_point_3f << centroid_point[0], centroid_point[1], centroid_point[2];
     // finish the description related to pcd_transform().
@@ -211,6 +245,8 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
         //get minimum values for re-transform later
         offset_vector_for_retransform = getMinValues(pcl_for_testing_interpolation);
 
+        cout <<"Offset vector for retransform: "<< endl << offset_vector_for_retransform[0] << endl << offset_vector_for_retransform[1] << endl << offset_vector_for_retransform[2] << endl;
+
 
     }
     else {
@@ -244,6 +280,7 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
 
         //get minimum values for re-transform later
         offset_vector_for_retransform = getMinValues(new_pcl);
+        cout <<"Offset vector for retransform: "<< endl  << offset_vector_for_retransform[0] << endl << offset_vector_for_retransform[1] << endl << offset_vector_for_retransform[2] << endl;
     }
 
   
@@ -275,7 +312,7 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
     // NOTE: Re-transform only to the regression plane frame, NOT to robot-based frame, for better visualization
     // If you want to further retransform to input camera depth optical frame, you have to modify the function
 
-    graspable_points_after_retransform = pcd_re_transform(graspable_points, matching_settings.voxel_size, offset_vector_for_retransform);
+    graspable_points_after_retransform = pcd_re_transform(graspable_points, matching_settings.voxel_size, offset_vector_for_retransform, rotation_matrix, centroid_point);
 
 
     // ****** Visualization ******* //
@@ -297,7 +334,9 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
     sensor_msgs::PointCloud2 results_of_combined_analysis;
 
     // Searching distance for intersection between convex peaks and graspability maxima
-    float distance_threshold = matching_settings.voxel_size;
+    //float distance_threshold = matching_settings.voxel_size;
+
+    float distance_threshold = 0.01;
 
     // combine Graspability maxima with convex shape analysis. output the intersection of both.
     // Load the PCD file
@@ -308,6 +347,14 @@ detect_graspable_points::detect_graspable_points(sensor_msgs::PointCloud2ConstPt
     cout <<"graspable points created with combined criterion"<< endl;
 
     combinedPub.publish(results_of_combined_analysis);
+
+    visualization_msgs::MarkerArray gScore;
+    
+    gScore = visualizeGScore(graspable_points_after_retransform, matching_settings);
+
+    g_score_pub.publish(gScore);
+
+    cout <<"Visualization of the G-score of each elevation is done."<< endl;
 
     // ****** Publish the transformed raw point cloud ******* //
 
@@ -632,7 +679,7 @@ void detect_graspable_points::pcd_least_squares_plane(const pcl::PointCloud<pcl:
 // ****** TRANSFORMATION ******* //
 
 
-void detect_graspable_points::pcd_transform ( const pcl::PointCloud<pcl::PointXYZ>  raw_pcd, pcl::PointCloud<pcl::PointXYZ> &transformed_point_cloud, Eigen::Vector4f &centroid_vector_of_plane, Eigen::Matrix3f &rotation_matrix) {
+void detect_graspable_points::pcd_transform ( const pcl::PointCloud<pcl::PointXYZ>  &raw_pcd, pcl::PointCloud<pcl::PointXYZ> &transformed_point_cloud, Eigen::Vector4f &centroid_vector_of_plane, Eigen::Matrix3f &rotation_matrix) {
 
 
 	Eigen::Vector3f normal_vector_of_plane;
@@ -649,12 +696,12 @@ void detect_graspable_points::pcd_transform ( const pcl::PointCloud<pcl::PointXY
 
 	float innerproduct_of_centroid_normal_vector = centroid_vector_of_plane3f.dot(normal_vector_of_plane);
 
-   /* 
-	if (innerproduct_of_centroid_normal_vector > 0) // changes direction of vector to be from ground to sky if needed
-  {
-		normal_vector_of_plane = - normal_vector_of_plane;
-	}
-	 */
+  
+	// if (innerproduct_of_centroid_normal_vector > 0) // changes direction of vector to be from ground to sky if needed
+  // {
+	// 	normal_vector_of_plane = - normal_vector_of_plane;
+	// }
+	
 	y_vector_of_plane = centroid_vector_of_plane3f.cross(normal_vector_of_plane); // .cross realize cross product
 	y_vector_of_plane = y_vector_of_plane/y_vector_of_plane.norm(); //normalize vector
 	
@@ -680,6 +727,8 @@ void detect_graspable_points::pcd_transform ( const pcl::PointCloud<pcl::PointXY
     one(i)=1;
   }
 
+
+  //transformed_point_cloud_matrix=rotation_matrix_transposed*raw_pcd_matrix - (rotation_matrix_transposed*centroid_vector_of_plane3f*one.transpose());
   transformed_point_cloud_matrix=rotation_matrix_transposed*raw_pcd_matrix - (rotation_matrix_transposed*centroid_vector_of_plane3f*one.transpose());
 
   //assign matrix values to point that is fed in tranformed pcl
@@ -1087,7 +1136,7 @@ std::vector<std::vector<std::vector<int>>> detect_graspable_points::creategrippe
         // Calculate radius of inner cone and outer solid and void area.
         grippable_radius = std::round(gripper_mask_top_solid_radius + (z_subscript-1)/std::tan((90 - gripper_param.opening_angle) * (M_PI / 180.0)));
         outer_unreachable_radius = std::round(gripper_mask_top_solid_radius + std::sqrt(2 * gripper_mask_height/cos(gripper_param.closing_angle * (M_PI / 180.0)) * (gripper_mask_height-(z_subscript-1)) - std::pow(gripper_mask_height-(z_subscript-1), 2)));
-        inner_unreachable_radius = std::round(std::sqrt(2*1.5*gripper_mask_bottom_void_radius*((gripper_mask_height-2.5*gripper_mask_bottom_void_radius)+(z_subscript-1))-std::pow(((gripper_mask_height-2.5*gripper_mask_bottom_void_radius)+(z_subscript-1)),2)));
+        inner_unreachable_radius = std::round(std::sqrt(2*(gripper_mask_height-gripper_mask_clearance)*(z_subscript-1)-std::pow((z_subscript-1),2))-gripper_mask_clearance);
         //unreachble_radius = gripper_mask_half_size - std::round(gripper_mask_half_size - (opening_spine_radius + spine_depth)) * (z_subscript) / (opening_spine_depth - 1);
 
         for (int y_subscript = 0; y_subscript < gripper_mask_size; ++y_subscript) {
@@ -1100,6 +1149,7 @@ std::vector<std::vector<std::vector<int>>> detect_graspable_points::creategrippe
                 if ((z_subscript <= gripper_mask_clearance && distance_from_center_of_layer <= grippable_radius) ||
                     (z_subscript > gripper_mask_clearance && z_subscript <= (gripper_mask_height-gripper_mask_bottom_void_radius)
                     && distance_from_center_of_layer <= outer_unreachable_radius
+                    && distance_from_center_of_layer > inner_unreachable_radius
                     
                     ) ||
                     (z_subscript > (gripper_mask_height-gripper_mask_bottom_void_radius) && z_subscript != gripper_mask_height 
@@ -1214,7 +1264,7 @@ void detect_graspable_points::detectTerrainPeaks(pcl::PointCloud<pcl::PointXYZ> 
 
     // Publish to ROS
     pcl::toROSMsg(peak_visualization_cloud, cloud_msg);
-    cloud_msg.header.frame_id="regression_plane_frame";
+    cloud_msg.header.frame_id="camera_depth_optical_frame";
     cloud_msg.header.stamp = ros::Time::now();
 
     cout <<"curvature detected."<< endl;
@@ -1247,7 +1297,7 @@ vector<vector<int>> detect_graspable_points::voxel_matching(vector<vector<vector
     
     std::vector<int> half_size_of_gripper_mask = {static_cast<int>(size_of_gripper_mask[0] / 2), static_cast<int>(size_of_gripper_mask[1] / 2), static_cast<int>(size_of_gripper_mask[2] / 2)};
 
-
+    cout <<"Half size of gripper mask: "<< static_cast<int>(half_size_of_gripper_mask[0])*0.005 << endl;
     // Save z subscript of solid voxels. first, find indices and values of nonzero elements in the terrain_matrix. then,
     // convert linear indices to subscripts
     int z_max = 0;
@@ -1365,6 +1415,8 @@ vector<vector<int>> detect_graspable_points::voxel_matching(vector<vector<vector
         // Fill in the point into the output data set
         searching_solid_voxels_map[0][index_of_voxel_being_compared] = subscripts_of_searching_solid_voxels.x[index_of_voxel_being_compared] + half_size_of_gripper_mask[0];
         searching_solid_voxels_map[1][index_of_voxel_being_compared] = subscripts_of_searching_solid_voxels.y[index_of_voxel_being_compared] + half_size_of_gripper_mask[1];
+        // searching_solid_voxels_map[0][index_of_voxel_being_compared] = subscripts_of_searching_solid_voxels.x[index_of_voxel_being_compared];
+        // searching_solid_voxels_map[1][index_of_voxel_being_compared] = subscripts_of_searching_solid_voxels.y[index_of_voxel_being_compared];
         searching_solid_voxels_map[2][index_of_voxel_being_compared] = subscripts_of_searching_solid_voxels.z[index_of_voxel_being_compared];
         
         // The forth column of the output data set is the graspability score. It is reduced by a penalty ratio
@@ -1419,13 +1471,18 @@ vector<vector<int>> detect_graspable_points::voxel_matching(vector<vector<vector
 
 // ****** RE-TRANSFORMATION ******* //
 
-std::vector<std::vector<float>> detect_graspable_points::pcd_re_transform(std::vector<std::vector<int>> voxel_coordinates_of_graspable_points, float voxel_size, std::vector<float> offset_vector) {
-                                                                          // Eigen::Matrix3f rotation_matrix, 
-                                                                          // Eigen::Vector4f centroid_vector_of_plane, 
+std::vector<std::vector<float>> detect_graspable_points::pcd_re_transform(std::vector<std::vector<int>> voxel_coordinates_of_graspable_points, 
+                                                                          float voxel_size, 
+                                                                          std::vector<float> offset_vector,
+                                                                          Eigen::Matrix3f inverse_rotation_matrix,
+                                                                          Eigen::Vector4f centroid_vector_of_plane) {
                                                                           // std::vector<float> offset_vector
                                                                           
     
     //pcd_re_transform returns the coordinates of the voxel array to the original input coordinate system.
+
+    // Transpose the rotation matrix to get the transformation from "regression plane" to "camera"
+  
 
     // Initialize output array.
     std::vector<std::vector<float>> graspable_points(0, vector<float>(0,0));
@@ -1438,13 +1495,45 @@ std::vector<std::vector<float>> detect_graspable_points::pcd_re_transform(std::v
     // Resize output array.
     graspable_points.resize(4, vector<float>(voxel_coordinates_of_graspable_points[0].size(), 0.0f));
 
+    Eigen::Vector3f centroid_vector_of_plane3f;
+    centroid_vector_of_plane3f << centroid_vector_of_plane[0], centroid_vector_of_plane[1] , centroid_vector_of_plane[2]; 
+
+    Eigen::Vector3f offset_vector3f;
+    offset_vector3f << offset_vector[0], offset_vector[1] , offset_vector[2];
+
+    // Eigen::VectorXf one(voxel_coordinates_of_graspable_points.size()) ;
+    // for (int i=0;i<voxel_coordinates_of_graspable_points.size();i++)
+    // {
+    //   one(i)=1;
+    // }
+
+
+    //transformed_point_cloud_matrix=rotation_matrix_transposed*raw_pcd_matrix - (rotation_matrix_transposed*centroid_vector_of_plane3f*one.transpose());
+
     // Re-transformation using the parameters in the voxelization step
     for (int i = 0; i < voxel_coordinates_of_graspable_points[0].size(); ++i) {
-         
-        graspable_points[0][i] = (voxel_coordinates_of_graspable_points[0][i]*1.0 - voxel_size/4) * voxel_size + offset_vector[0];
-        graspable_points[1][i] = (voxel_coordinates_of_graspable_points[1][i]*1.0 - voxel_size/4) * voxel_size + offset_vector[1];
-        graspable_points[2][i] = (voxel_coordinates_of_graspable_points[2][i]*1.0 - voxel_size/4) * voxel_size + offset_vector[2];
-        graspable_points[3][i] = voxel_coordinates_of_graspable_points[3][i];
+
+        // Convert voxel coordinates back to real-world coordinates with scaling and offset
+
+        Eigen::Vector3f point_in_regression_plane;
+        // point_in_regression_plane[0] = (voxel_coordinates_of_graspable_points[0][i] * 1.0f - voxel_size / 4) * voxel_size + offset_vector[0]+0.05;
+        // point_in_regression_plane[1] = (voxel_coordinates_of_graspable_points[1][i] * 1.0f - voxel_size / 4) * voxel_size + offset_vector[1]-0.17;
+        // point_in_regression_plane[2] = (voxel_coordinates_of_graspable_points[2][i] * 1.0f - voxel_size / 4) * voxel_size + offset_vector[2];
+        
+        point_in_regression_plane[0] = (voxel_coordinates_of_graspable_points[0][i] * 1.0f - voxel_size / 4) * voxel_size;
+        point_in_regression_plane[1] = (voxel_coordinates_of_graspable_points[1][i] * 1.0f - voxel_size / 4) * voxel_size;
+        point_in_regression_plane[2] = (voxel_coordinates_of_graspable_points[2][i] * 1.0f - voxel_size / 4) * voxel_size;
+
+        // Apply the inverse rotation to transform the point back to the "camera" frame
+        Eigen::Vector3f point_in_camera_frame = inverse_rotation_matrix * point_in_regression_plane + centroid_vector_of_plane3f + (inverse_rotation_matrix*offset_vector3f);
+
+
+
+        // Store the transformed point in the output array
+        graspable_points[0][i] = point_in_camera_frame[0];
+        graspable_points[1][i] = point_in_camera_frame[1];
+        graspable_points[2][i] = point_in_camera_frame[2];
+        graspable_points[3][i] = voxel_coordinates_of_graspable_points[3][i]; // Retain the intensity value (or other metadata)
 
     }
     // Store if needed
@@ -1536,7 +1625,7 @@ sensor_msgs::PointCloud2 detect_graspable_points::visualizeRainbow(std::vector<s
 
     // Create ROS Message for publishing
     pcl::toROSMsg(pcl_cloud, cloud_msg);
-    cloud_msg.header.frame_id="regression_plane_frame";
+    cloud_msg.header.frame_id="camera_depth_optical_frame";
     cloud_msg.header.stamp = ros::Time::now();
 
     return cloud_msg;
@@ -1557,14 +1646,14 @@ sensor_msgs::PointCloud2 detect_graspable_points::combinedAnalysis(
 
     // Initialize the variables
     sensor_msgs::PointCloud2 cloud_msg;
-    pcl::PointCloud<pcl::PointXYZRGB> cloud1;
-    pcl::PointCloud<pcl::PointXYZRGB> close_points;
+    pcl::PointCloud<pcl::PointXYZRGBA> cloud1;
+    pcl::PointCloud<pcl::PointXYZRGBA> close_points;
 
 
     // Take only those points with a higher graspability score of a certain value and if they are above the z-threshold
     // we give them blue color
     for (int n=0; n<array[0].size(); n++) {
-            pcl::PointXYZRGB point;
+            pcl::PointXYZRGBA point;
 
             if (array[3][n] >= matching_settings.graspability_threshold && array[2][n] > matching_settings.delete_lower_targets_threshold){
                 point.x = array[0][n];
@@ -1573,6 +1662,7 @@ sensor_msgs::PointCloud2 detect_graspable_points::combinedAnalysis(
                 point.r = 128; // Set blue to 0
                 point.g = 0; // Set blue to 0
                 point.b = 128; // Set blue to 0
+                point.a = array[3][n];
                 cloud1.push_back(point);
             }
 
@@ -1581,13 +1671,13 @@ sensor_msgs::PointCloud2 detect_graspable_points::combinedAnalysis(
 
     // return the intersection of high graspability score points and convex peaks.
     // if both points are closer than a distance_threshold, we take it.
-    for (const pcl::PointXYZRGB point1 : cloud1.points) {
+    for (const pcl::PointXYZRGBA point1 : cloud1.points) {
         for (const pcl::PointXYZRGB point2 : cloud2.points) {
             float distance = pcl::euclideanDistance(point1, point2);
 
             if (distance < distance_threshold) {
                 close_points.push_back(point1);
-                close_points.push_back(point2);
+                //close_points.push_back(point2);
             }
         }
     }
@@ -1597,11 +1687,122 @@ sensor_msgs::PointCloud2 detect_graspable_points::combinedAnalysis(
     cout << "published " << close_points.size () << " data points to ROS" << endl;
 
     pcl::toROSMsg(close_points, cloud_msg);
-    cloud_msg.header.frame_id="regression_plane_frame";
+    cloud_msg.header.frame_id="camera_depth_optical_frame";
     cloud_msg.header.stamp = ros::Time::now();
 
     return cloud_msg;
 }
+
+visualization_msgs::MarkerArray detect_graspable_points::visualizeGScore(std::vector<std::vector<float>> array, const MatchingSettings& matching_settings) {
+    // Create a point cloud pointer for storing point data with color information
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    
+    // Initialize a marker message for visualization
+    visualization_msgs::MarkerArray marker_array;
+
+    // Store whether a point has been processed
+    std::vector<bool> processed(array[0].size(), false);
+
+    // Iterate through the input array and populate the point cloud
+    for (int n = 0; n < array[0].size(); n++) {
+        pcl::PointXYZRGB point;  // Create a point object with color
+
+        if (array[3][n] >= matching_settings.graspability_threshold) {  // Filter points based on the z-coordinate threshold
+            // Assign coordinates and color (red component) to the point
+            point.x = array[0][n];
+            point.y = array[1][n];
+            point.z = array[2][n];
+            point.r = array[3][n];  // Red channel intensity set to G-Score
+            point.g = 0;            // Green channel intensity set to 0
+            point.b = 0;            // Blue channel intensity set to 0
+            
+            cloud->push_back(point);  // Add the point to the point cloud
+        }
+    }
+
+    // Set up a k-d tree for nearest neighbor search on the point cloud
+    pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
+    kdtree.setInputCloud(cloud);  // Initialize the k-d tree with the point cloud
+
+    pcl::PointXYZRGB searchPoint;  // Point to search for neighbors
+    std::vector<int> pointIdxRadiusSearch;  // Indices of found neighbors
+    std::vector<float> pointRadiusSquaredDistance;  // Distances to found neighbors
+    float radius = 0.07;  // Search radius
+
+    string percentsymbol = "%";
+
+    // Marker ID counter
+    int marker_id = 0;
+
+    // Iterate over each point in the cloud
+    for (int i = 0; i < cloud->size(); ++i) {
+        if (processed[i]) continue;  // Skip already processed points
+
+        searchPoint = cloud->points[i];  // Get the point from the cloud
+/* 
+        std::cout << "Neighbors within radius search at index "<< i <<" (" << searchPoint.x 
+                  << " " << searchPoint.y 
+                  << " " << searchPoint.z
+                  << ") with radius=" << radius << std::endl;
+ */
+        // Perform radius search for neighbors around searchPoint
+        if (kdtree.radiusSearch(searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0) {
+            int maxRedIndex = -1;
+            float maxRed = 0.0;
+
+            // Find the neighbor with the highest red intensity
+            for (std::size_t j = 0; j < pointIdxRadiusSearch.size(); ++j) {
+                int index = pointIdxRadiusSearch[j];
+                if (cloud->points[index].r > maxRed) {
+                    maxRed = cloud->points[index].r;
+                    maxRedIndex = index;
+                    
+                }
+            }
+            //std::cout << "Current highest G-Score within search radius: "<< maxRed << " with an index of: "<< maxRedIndex<< std::endl;
+
+            if (maxRedIndex != -1) {
+                // Mark the area within the radius as processed
+                for (int index : pointIdxRadiusSearch) {
+                    processed[index] = true;
+                }
+
+
+                visualization_msgs::Marker marker;
+                marker.header.frame_id = "camera_depth_optical_frame";  // Set the frame of reference
+                marker.header.stamp = ros::Time::now();  // Timestamp the marker with the current time
+                marker.ns = "array_visualization";  // Namespace for the marker
+                marker.id = marker_id++;  // Unique ID for this marker
+                marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;  // Marker type (text facing the user)
+                marker.action = visualization_msgs::Marker::ADD;  // Action (add marker)
+                marker.scale.x = 0.08;  // Scale in x-direction (affects marker size)
+                marker.scale.y = 0.08;  // Scale in y-direction (affects marker size)
+                marker.scale.z = 0.08;  // Scale in z-direction (affects marker size)
+                marker.color.r = 0.16;  // Red color component
+                marker.color.g = 0.45;  // Green color component
+                marker.color.b = 0.0;  // Blue color component
+                marker.color.a = 1.0;  // Alpha (transparency)
+
+                // Add the point with the highest red intensity to the marker
+                //geometry_msgs::Point highestRedPoint;
+                marker.pose.position.x = cloud->points[maxRedIndex].x;
+                marker.pose.position.y = cloud->points[maxRedIndex].y;
+                marker.pose.position.z = cloud->points[maxRedIndex].z;
+                //marker.points.push_back(highestRedPoint);
+
+                // Set the text to the red intensity value
+                marker.text = std::to_string(static_cast<int>(maxRed)) + percentsymbol;
+
+                // Add the marker to the marker array
+                marker_array.markers.push_back(marker);
+            }
+        }
+    }
+
+    // Return the marker message
+    return marker_array;
+}
+
 
 
 
