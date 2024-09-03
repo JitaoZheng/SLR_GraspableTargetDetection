@@ -1,124 +1,84 @@
 
-#include <iostream> 
-#include <fstream> 
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <iostream>
+#include <fstream>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
 #include <pcl/filters/filter.h>
-
 
 using namespace std;
 using namespace std::chrono_literals;
 
-int main(int argc, char **argv)
+class PointCloudPublisher : public rclcpp::Node
 {
-    // Initialize ROS
-    ros::init(argc, argv, "pointcloud_publisher");
-    ros::NodeHandle nh;
+public:
+    PointCloudPublisher() : Node("pointcloud_publisher")
+    {
+        // Create publishers for the point clouds
+        pub1_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("graspability_map", 10);
+        pub2_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("peaks_map", 10);
 
-    // Create a publisher for the point cloud
-    ros::Publisher pub1 = nh.advertise<sensor_msgs::PointCloud2>("merged_pcd", 1);
-    ros::Publisher pub2 = nh.advertise<sensor_msgs::PointCloud2>("peaks_cloud", 1);
+        // Timer to trigger the callback periodically (1 Hz)
+        timer_ = this->create_wall_timer(1s, std::bind(&PointCloudPublisher::timer_callback, this));
+    }
 
-    ros::Rate loop_rate(1);
-
-    while (ros::ok())
-    {   
-
-        // Create a point cloud
+private:
+    void timer_callback()
+    {
+        // Load point clouds from PCD files
         pcl::PointCloud<pcl::PointXYZ> cloud;
         pcl::PointCloud<pcl::PointXYZRGB> peaks;
-        vector<int> indices;
 
-        // ****** SCAR-E Maps (Large maps, set voxel size to 0.01!) ******* //
+        if (pcl::io::loadPCDFile<pcl::PointXYZ>("../ros2_ws/src/detect_graspable_points/pcd/graspability_map_linear_0.pcd", cloud) == -1) 
+        {
+            RCLCPP_ERROR(this->get_logger(), "Couldn't read merged point cloud file");
+            return;
+        }
 
-        // ****** Scene 1 ******* //
+        if (pcl::io::loadPCDFile<pcl::PointXYZRGB>("../ros2_ws/src/detect_graspable_points/pcd/peaks_linear_0.pcd", peaks) == -1) 
+        {
+            RCLCPP_ERROR(this->get_logger(), "Couldn't read peaks point cloud file");
+            return;
+        }
 
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/scanned_cloud_primitive.pcd",cloud);
+        // Convert the point clouds to ROS messages
+        sensor_msgs::msg::PointCloud2 output1;
+        sensor_msgs::msg::PointCloud2 output2;
 
-        // ****** Scene 2 ******* //
-
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/simulated_cloud.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/simulated_cloud_pre-scan.pcd",cloud);
-
-        // ****** Scene 3 ******* //
-
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/scanned_cloud_Apr8.pcd",cloud);
-
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/testfield_apr8_upscaled.pcd",cloud);
-
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/boulder_wall_poisson.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/boulder_wall_testfield_dense.pcd",cloud);
-
-        // ****** Testing the ICP ******* //
-
-        // Linear movement
-
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5.pcd",cloud);
-        pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5_0.0.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5_0.0_-0.5.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/linear_movement/merged_1.0_0.5_0.0_-0.5_-1.0.pcd",cloud);
-
-        // Circular movement
-
-        
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/meshlab_circular/circular_50.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/meshlab_circular/circular_60.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/meshlab_circular/circular_70.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/meshlab_circular/circular_80.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/meshlab_circular/circular_90.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/meshlab_circular/circular_100.pcd",cloud);
-
-
-        // ****** Scene 4 ******* //
-
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/scanned_cloud_realtime_1.5x.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/Artificial_rocks_pose_1.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/artificial_rocks.pcd",cloud);
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/scanned_cloud_realtime.pcd",cloud);
-
-        // ****** HubRobo Maps (small maps, set voxel size to 0.001!) ******* //
-
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/leaning_bouldering_holds.pcd",cloud);
-        
-        // ****** Test Realtime sample ******* //
-        //pcl::io::loadPCDFile<pcl::PointXYZ>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/realtime.pcd",cloud);
-
-
-        // ****** Cloud of curvatures ******* //
-        // Remove that if the bug in curvature detection is fixed
-
-        pcl::io::loadPCDFile<pcl::PointXYZRGB>("src/SRL_GraspableTargetDetection/detect_graspable_points/pcd_data/peak_pcd.pcd",peaks);
-
-        // Convert the point cloud to a ROS message
-        sensor_msgs::PointCloud2 output1;
-        sensor_msgs::PointCloud2 output2;
-        pcl::toROSMsg(cloud, output1);
+        //pcl::toROSMsg(cloud, output1);
         pcl::toROSMsg(peaks, output2);
 
         // Set the header information
         output1.header.frame_id = "camera_depth_optical_frame";
-        output1.header.stamp = ros::Time::now();
+        output1.header.stamp = this->get_clock()->now();
 
         output2.header.frame_id = "camera_depth_optical_frame";
-        output2.header.stamp = ros::Time::now();
+        output2.header.stamp = this->get_clock()->now();
 
-        // Publish the point cloud
-        pub1.publish(output1);
-        pub2.publish(output2);
+        // Publish the point clouds
+        pub1_->publish(output1);
+        pub2_->publish(output2);
 
-        cout <<"PointCloud published under the frame'camera_depth_optical_frame'" << endl;
-
-        // Sleep to maintain the 1 Hz publishing rate
-        loop_rate.sleep();
+        RCLCPP_INFO(this->get_logger(), "PointCloud published under the frame 'map'");
     }
 
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub1_;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub2_;
+    rclcpp::TimerBase::SharedPtr timer_;
+};
 
+int main(int argc, char **argv)
+{
+    // Initialize ROS2
+    rclcpp::init(argc, argv);
+
+    // Create the node and spin it
+    rclcpp::spin(std::make_shared<PointCloudPublisher>());
+
+    // Shutdown ROS2
+    rclcpp::shutdown();
     return 0;
-
-
-   
 }

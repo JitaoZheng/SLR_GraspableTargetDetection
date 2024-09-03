@@ -1,0 +1,265 @@
+function sysCall_init() 
+    maxScanDistance=5
+    cameraAngle=60*math.pi/180
+    pointsToExtract={32,32}
+    
+    visionSensorHandle=sim.getObject('.')
+    pointCloudHandle=sim.getObject("/PointCloud")
+    sim.removePointsFromPointCloud(pointCloudHandle,0,nil,0)
+
+    sim.setObjectFloatParam(visionSensorHandle,sim.visionfloatparam_far_clipping,maxScanDistance)
+    sim.setObjectFloatParam(visionSensorHandle,sim.visionfloatparam_perspective_angle,cameraAngle)
+
+    showPoints=true
+        
+    local col={1,1,0}
+    points=sim.addDrawingObject(sim.drawing_spherepts,0.005,0,-1,100000,nil,nil,nil,col)
+
+    local l=sim.getObjectsInTree(sim.handle_scene,sim.object_shape_type)
+    collectionToRender=sim.createCollection(1)
+    for i=1,#l,1 do
+        if sim.getObjectInt32Param(l[i],sim.objintparam_visible)~=0 then
+            sim.addItemToCollection(collectionToRender,sim.handle_single,l[i],0)
+        end
+    end
+    sim.setObjectInt32Param(visionSensorHandle,sim.visionintparam_entity_to_render,collectionToRender)
+end
+
+function sysCall_vision(inData)
+    simVision.sensorImgToWorkImg(inData.handle)
+    simVision.workImgToBuffer1(inData.handle)
+    simVision.sensorDepthMapToWorkImg(inData.handle)
+    local trig,packedPacket,packedCols=simVision.coordinatesFromWorkImg(inData.handle,pointsToExtract,false,true)
+    if packedPacket then
+        local measuredData={}
+        local colors={}
+        sim.addDrawingObjectItem(points,nil)
+        local u1=sim.unpackFloatTable(packedPacket)
+        local cols
+        if packedCols then
+            cols=sim.unpackUInt8Table(packedCols)
+        end
+        local m=sim.getObjectMatrix(visionSensorHandle,sim.handle_world)
+        if u1 then
+            for j=0,u1[2]-1,1 do
+                for i=0,u1[1]-1,1 do
+                    local ind=(j*u1[1]+i)
+                    local w=2+4*ind
+                    v1=u1[w+1]
+                    v2=u1[w+2]
+                    v3=u1[w+3]
+                    v4=u1[w+4]
+                    if (v4<maxScanDistance*0.999) then
+                        local p={v1,v2,v3}
+                        p=sim.multiplyVector(m,p)
+                        table.insert(measuredData,p[1])
+                        table.insert(measuredData,p[2])
+                        table.insert(measuredData,p[3])
+                        if cols then
+                            table.insert(colors,cols[3*ind+1])
+                            table.insert(colors,cols[3*ind+2])
+                            table.insert(colors,cols[3*ind+3])
+                        end
+                        if showPoints then
+                            sim.addDrawingObjectItem(points,p)
+                        end
+                    end
+                end
+            end
+        end
+        if #colors>0 then
+            sim.insertPointsIntoPointCloud(pointCloudHandle,2,measuredData,colors,0.001) -- wasn't yet supported in CoppeliaSim V4.2.0Rev2
+        else
+            sim.insertPointsIntoPointCloud(pointCloudHandle,0,measuredData,{255,0,255},0.001)
+        end
+    end
+end
+
+
+
+
+
+
+
+function __getObjectPosition__(a,b)
+    -- compatibility routine, wrong results could be returned in some situations, in CoppeliaSim <4.0.1
+    if b==sim.handle_parent then
+        b=sim.getObjectParent(a)
+    end
+    if (b~=-1) and (sim.getObjectType(b)==sim.object_joint_type) and (sim.getInt32Param(sim.intparam_program_version)>=40001) then
+        a=a+sim.handleflag_reljointbaseframe
+    end
+    return sim.getObjectPosition(a,b)
+end
+function __getObjectQuaternion__(a,b)
+    -- compatibility routine, wrong results could be returned in some situations, in CoppeliaSim <4.0.1
+    if b==sim.handle_parent then
+        b=sim.getObjectParent(a)
+    end
+    if (b~=-1) and (sim.getObjectType(b)==sim.object_joint_type) and (sim.getInt32Param(sim.intparam_program_version)>=40001) then
+        a=a+sim.handleflag_reljointbaseframe
+    end
+    return sim.getObjectQuaternion(a,b)
+end
+if (sim_call_type==sim.syscb_init) then
+    link={
+        sim.getObjectHandle('IRB140'),
+        sim.getObjectHandle('IRB140_link2'),
+        sim.getObjectHandle('IRB140_link3'),
+        sim.getObjectHandle('IRB140_link4'),
+        sim.getObjectHandle('IRB140_link5'),
+        sim.getObjectHandle('IRB140_link6'),
+        sim.getObjectHandle('IRB140_link7')
+    }
+end
+
+function getTransformStamped(obj,n,relTo,relN)
+    t=sim.getSystemTime()
+    p=__getObjectPosition__(obj,relTo)
+    o=__getObjectQuaternion__(obj,relTo)
+    return {
+        header={
+            stamp=t,
+            frame_id=relN
+        },
+        child_frame_id=n,
+        transform={
+            translation={x=p[1],y=p[2],z=p[3]},
+            rotation={x=o[1],y=o[2],z=o[3],w=o[4]}
+        }
+    }
+end
+
+if (sim_call_type==sim.syscb_sensing) then
+    transforms={
+        getTransformStamped(link[1],'link1',-1,'world'),
+        getTransformStamped(link[2],'link2',link[1],'link1'),
+        getTransformStamped(link[3],'link3',link[2],'link2'),
+        getTransformStamped(link[4],'link4',link[3],'link3'),
+        getTransformStamped(link[5],'link5',link[4],'link4'),
+        getTransformStamped(link[6],'link6',link[5],'link5'),
+        getTransformStamped(link[7],'link7',link[6],'link6'),
+    }
+    simROS.sendTransforms(transforms)
+end
+
+
+
+function subscriber_callback(msg)
+    -- This is the subscriber callback function
+    sim.addLog(sim.verbosity_scriptinfos, 'subscriber receiver following Float32: '..msg.data)
+end
+
+function getTransformStamped(objHandle, name, relTo, relToName)
+    -- This function retrieves the stamped transform for a specific object
+    local t = simROS2.getSystemTime()
+    local p = sim.getObjectPosition(objHandle,relTo)
+    local o = sim.getObjectQuaternion(objHandle,relTo)
+    return {
+        header = {
+            stamp = t,
+            frame_id = relToName
+        },
+        child_frame_id = name,
+        transform = {
+            translation = {x = p[1], y = p[2], z = p[3]},
+            rotation = {x = o[1], y = o[2], z = o[3], w = o[4]}
+        }
+    }
+end
+
+function sysCall_init()
+    sim = require('sim')
+    simROS2 = require('simROS2')
+
+    -- The simulation script initialization
+    objectHandle = sim.getObject('..')
+    objectAlias = sim.getObjectAlias(objectHandle, 3)
+
+    -- Prepare the float32 publisher and subscriber (we subscribe to the topic we publish):
+    publisher = simROS2.createPublisher('/simulationTime', 'std_msgs/msg/Float32')
+    subscriber = simROS2.createSubscription('/simulationTime', 'std_msgs/msg/Float32', 'subscriber_callback')
+end
+
+function sysCall_actuation()
+    -- Send an updated simulation time message, and send the transform of the object this script is attached to:
+    simROS2.publish(publisher, {data = sim.getSimulationTime()})
+    simROS2.sendTransform(getTransformStamped(objectHandle, objectAlias, -1, 'world'))
+    -- To send several transforms at once, use simROS2.sendTransforms instead
+end
+
+function sysCall_cleanup()
+    -- Following not really needed in a simulation script (i.e. automatically shut down at simulation end):
+    simROS.shutdownPublisher(publisher)
+    simROS.shutdownSubscriber(subscriber)
+end
+
+
+
+
+
+function click_callback()
+    createdShape=simSurfRec.reconstruct_scale_space(pointCloudHandle,4,12,300,0.001)
+ a=2
+ end
+ 
+function createDlg()
+     if not ui then
+         local xml =[[<ui title="point cloud" closeable="false" placement="relative">
+                 <button text="Take a point cloud picture to interact with" on-click="click_callback"/>
+                 <label text="(The robot can operate within a point cloud, or within a shape (i.e. a mesh))"/>
+         </ui>]]
+         ui=simUI.create(xml)
+         if uiPos then
+             simUI.setPosition(ui,uiPos[1],uiPos[2])
+         else
+             uiPos={}
+             uiPos[1],uiPos[2]=simUI.getPosition(ui)
+         end
+     end
+end
+
+function sysCall_init()
+    showDlg()
+    size=1
+pointCloudHandle=sim.getObject('/PointCloud',{noError=true})
+shapeHandle=sim.getObject('/Shape',{noError=true})
+    floorhandle=sim.getObjectHandle('.')
+        if(not sim.isHandle(pointCloudHandle)) then
+    sim.createPointCloud(0.02,100,0,4)
+    pointCloudHandle=sim.getObject('/PointCloud')
+    end
+    sub=simROS.subscribe('/camera/depth_registered/points', 'sensor_msgs/PointCloud2', 'pointcloudMessage_callback')
+    simROS.subscriberTreatUInt8ArrayAsString(sub)
+    a=0
+end
+
+function pointcloudMessage_callback(pts)
+if a==0 then
+    sim.removePointsFromPointCloud(pointCloudHandle,0,nil,0)
+    local points={}
+    local col={}
+    local num=pts.width*pts.height
+    tables=sim.unpackFloatTable(pts.data,0,0,0)
+    tables1=sim.unpackUInt8Table(pts.data,0,0,0)
+    for  i=0,num-1 do
+        if(tables[8*i+1]==tables[8*i+1]) then
+           table.insert(col,tables1[32*i+19])
+           table.insert(col,tables1[32*i+18])
+           table.insert(col,tables1[32*i+17])
+           table.insert(points,-tables[8*i+1])
+           table.insert(points,-tables[8*i+2])
+           table.insert(points,tables[8*i+3])
+         end
+    end
+    sim.insertPointsIntoPointCloud(pointCloudHandle,3,points,col,nil)
+
+    sim.setObjectPosition(pointCloudHandle,floorhandle,{0,0,0.2})
+    yawAngle=-90*(math.pi/180)
+    pitchAngle=0*(math.pi/180)
+    rollAngle=105*(math.pi/180)
+    alphaAngle,betaAngle,gammaAngle=sim.yawPitchRollToAlphaBetaGamma(yawAngle,pitchAngle,rollAngle)
+    sim.setObjectOrientation(pointCloudHandle,floorhandle,{alphaAngle,betaAngle,gammaAngle})
+    a=1
+    end
+end

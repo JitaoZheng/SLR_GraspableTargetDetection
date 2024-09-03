@@ -7,7 +7,7 @@
 #ifndef DETECT_GRASPABLE_POINTS_HPP
 #define DETECT_GRASPABLE_POINTS_HPP
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <fstream>
 #include <iostream>
@@ -15,26 +15,19 @@
 #include <vector>
 #include <cmath>
 
-// #include <std_msgs/Int64.h>
-// #include <std_msgs/String.h>
-// #include <std_msgs/Bool.h>
-#include <sensor_msgs/PointCloud.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/point_cloud_conversion.h>
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <geometry_msgs/Pose.h>
+
+#include <sensor_msgs/msg/point_cloud.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2_ros/transform_broadcaster.h>
 
-// PCL specific includes
-// #include <pcl/point_types.h>
-// #include <pcl/point_cloud.h>
-// #include <pcl/io/pcd_io.h>
-// #include <pcl/pcl_tests.h>
-#include "Eigen/Core"
-#include "Eigen/Dense"
+#include "tf2_ros/transform_broadcaster.h"
+
+#include <Eigen/Core>
+#include <Eigen/Dense>
 #include <eigen3/Eigen/Eigenvalues>
 
 #include <pcl/common/centroid.h>
@@ -50,40 +43,39 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/filter.h>
 
-#include "pcl/features/normal_3d.h"
-#include "pcl/features/principal_curvatures.h"
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/principal_curvatures.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/kdtree/kdtree_flann.h>
 
 #include <pcl/segmentation/sac_segmentation.h>
-#include <pcl_ros/transforms.h>
+#include <pcl_ros/transforms.hpp>
 
 #include <pcl/surface/mls.h>
 
-
-#include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 
-
-
-#include<libInterpolate/AnyInterpolator.hpp>
-#include<libInterpolate/Interpolate.hpp>
+#include <libInterpolate/AnyInterpolator.hpp>
+#include <libInterpolate/Interpolate.hpp>
 
 #include <chrono>
+
 
 
 using namespace std;
 
 
-class detect_graspable_points
+class DetectGraspablePoints : public rclcpp::Node
 {
 public:
- 	detect_graspable_points();
-	detect_graspable_points(sensor_msgs::PointCloud2ConstPtr cloud_msg);
-    ~detect_graspable_points(); // ~ is a bitwise NOT operator, e.g. NOT 011100 = 100011
+
+    DetectGraspablePoints();
+    ~DetectGraspablePoints();
 
 
 private:
+
+	void cloud_cb(const sensor_msgs::msg::PointCloud2::SharedPtr input_cloud_msg);
 
 	std::vector<float> getMinValues(const pcl::PointCloud<pcl::PointXYZ>& pointCloud);
 
@@ -134,46 +126,18 @@ private:
 
 
 	
-	void downsampling(const sensor_msgs::PointCloud2ConstPtr& cloud_msg, const std::string frame_id, pcl::PointCloud<pcl::PointXYZ> &filtered_points, const float cube_size);
+	void downsampling(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& cloud_msg, pcl::PointCloud<pcl::PointXYZ>& output_pcd, const float cube_size);
 	/**
 	 * \function name : downsampling() 
 	 * \brief : execute downsampling to input pointcloud (downsampling means the number of pointcloud is reduced)
-	 * \param cloud_msg : pointer of sensor_msgs::PointCloud2 (input)
+	 * \param cloud_msg : pointer of sensor_msgs::msg::PointCloud2 (input)
 	 * \param frame_id : reference frame of this point
 	 * \param filtered_points : downsampling points (output)
 	 * \param cube_size : voxel size
 	 * \return none
 	 */	
 
-	
-	void tf_broadcast(const std::string frame_id);
-	void tf_broadcast_from_pose(const std::string parant_frame_id, const std::string child_frame_id_to, geometry_msgs::Pose relative_pose_between_frame);
-
-	
-	void visualizePoint(const double x, const double y, const double z, const std::string object_name, const std::string frame_id);
-	/**
-	 * \function name : visualizePoint() 
-	 * \brief : publish a 3D point (x, y, z) with respect to frame_id.
-	 * \param x : x value of position vector
-	 * \param y : y value of position vector
-	 * \param z : z value of position vector
-	 * \param object_name : object name of this point. this shows what this point is.
-	 * \param frame_id : reference frame of this point
-	 * \return none
-	 */	
-
-	
-	void visualizeVector(const Eigen::Vector3f &vector_of_start_point, const Eigen::Vector3f &vector_of_end_point, const std::string object_name, const std::string frame_id);
-	/**
-	 * \function name : visualizeVector() 
-	 * \brief : publish an arrow from vector_of_start_point to vector_of_end_point
-	 * \param vector_of_start_point : inital point of the arrow
-	 * \param vector_of_end_point : endpoint point of the arrow
-	 * \param object_name : object name of this point. this shows what this point is.
-	 * \param frame_id : reference frame of this point
-	 * \return none
-	 */	
-
+	void tf_broadcast_from_pose(const std::string parant_frame_id, const std::string child_frame_id_to, geometry_msgs::msg::Pose relative_pose_between_frame);
 	
 	//std::string vox_compare(const int number_of_points, const vector<vector<vector<int>>> subset_of_voxel_array, const vector<vector<vector<int>>> gripper_mask);
 	/**
@@ -272,7 +236,7 @@ private:
 
 
 	
-	void detectTerrainPeaks(pcl::PointCloud<pcl::PointXYZ> input_cloud, sensor_msgs::PointCloud2 &cloud_msg, const MatchingSettings& matching_settings);
+	void detectTerrainPeaks(pcl::PointCloud<pcl::PointXYZ> input_cloud, sensor_msgs::msg::PointCloud2 &cloud_msg, const MatchingSettings& matching_settings);
 	/**
 	 * \function name : detectTerrainPeaks()
 	 * \brief : estimate the normal vectors of each point and compute the curvature, returns the points with the largest principal curvature eigenvalue
@@ -316,29 +280,27 @@ private:
 
 
 
-	sensor_msgs::PointCloud2 visualizeRainbow(std::vector<std::vector<float>> array, const MatchingSettings& matching_settings);
+	sensor_msgs::msg::PointCloud2 visualizeRainbow(std::vector<std::vector<float>> array, const MatchingSettings& matching_settings);
 
-	sensor_msgs::PointCloud2 combinedAnalysis(const std::vector<std::vector<float>> array, const pcl::PointCloud<pcl::PointXYZRGB> cloud2, float distance_threshold, const MatchingSettings& matching_settings);
-
-	visualization_msgs::MarkerArray visualizeGScore(std::vector<std::vector<float>> array, const MatchingSettings& matching_settings);
+	sensor_msgs::msg::PointCloud2 combinedAnalysis(const std::vector<std::vector<float>> array, const pcl::PointCloud<pcl::PointXYZRGB> cloud2, float distance_threshold, const MatchingSettings& matching_settings);
 	
-	sensor_msgs::PointCloud2ConstPtr raw_cloud_msg_;
+	visualization_msgs::msg::MarkerArray visualizeGScore(std::vector<std::vector<float>> array, const MatchingSettings& matching_settings);
 
-  	// Node Handle declaration
-  	ros::NodeHandle nh;
+	rclcpp::Node::SharedPtr node_;
 
-	ros::Publisher downsampled_points_pub = nh.advertise<sensor_msgs::PointCloud2> ("/down_sample_points", 1);
-	ros::Publisher point_visualization_marker_pub = nh.advertise<visualization_msgs::Marker>("/detect_graspable_points/point_visualization_marker", 1);
-	ros::Publisher pub = nh.advertise<sensor_msgs::PointCloud2>("output", 1);
-	ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("normal_vector", 10);
-	ros::Publisher transformed_point_pub = nh.advertise<sensor_msgs::PointCloud2>("transformed_point", 1);
-	ros::Publisher interpolate_point_pub = nh.advertise<sensor_msgs::PointCloud2>("interpolated_point", 1);
-	ros::Publisher peaksPub = nh.advertise<sensor_msgs::PointCloud2>("peaks_of_convex_surface", 1);
-	ros::Publisher rainbowPub = nh.advertise<sensor_msgs::PointCloud2>("graspability_map", 1);
-	ros::Publisher combinedPub = nh.advertise<sensor_msgs::PointCloud2>("graspable_points_after_combined_criterion", 1);
-	ros::Publisher g_score_pub = nh.advertise<visualization_msgs::MarkerArray>("graspability_score", 1);
-	//ros::Publisher retransformed_point_pub = nh.advertise<sensor_msgs::PointCloud2>("graspable_points", 1);
-	tf2_ros::TransformBroadcaster dynamic_tf;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr downsampled_points_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr transformed_point_pub;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr interpolate_point_pub;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr peaksPub;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr rainbowPub;
+    //rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr combinedPub;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr g_score_pub;
+
+    rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr rawPcdSubscriber_;
+
+
+	std::shared_ptr<tf2_ros::TransformBroadcaster> dynamic_tf;
 };
 
 
