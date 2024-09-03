@@ -9,6 +9,8 @@ Originated in the Space Robotics Lab (SRL) of the Tohoku University. Based on Cl
 
 *   Taku Okawara (taku.okawara.t3@dc.tohoku.ac.jp)
 
+* Ringeval-Meusnier Antonin (ringeval-meusnier.antonin.camille.charles.s3@dc.tohoku.ac.jp)
+
 *   Kentaro Uno (unoken@astro.mech.tohoku.ac.jp)
 
 ## System Requirements
