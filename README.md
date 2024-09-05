@@ -9,12 +9,14 @@ Originated in the Space Robotics Lab (SRL) of the Tohoku University. Based on Cl
 
 *   Taku Okawara (taku.okawara.t3@dc.tohoku.ac.jp)
 
+* Ringeval-Meusnier Antonin (ringeval-meusnier.antonin.camille.charles.s3@dc.tohoku.ac.jp)
+
 *   Kentaro Uno (unoken@astro.mech.tohoku.ac.jp)
 
 ## System Requirements
 
 The code was tested on: 
-*   ROS Noetic
+*   ROS Foxy
 *   Ubuntu 20.04
 *   gcc version 9.4.0
 
@@ -31,7 +33,7 @@ Open a new terminal window.
 Type:
 
 ```
-cd ~/catkin_ws/src
+cd ~/ros2_ws/src
 ```
 Clone the repository:
 ```
@@ -43,7 +45,7 @@ Then we can build it:
 ```
 cd ..
 
-catkin_make
+colcon build
 ```
 If you haven't yet installed Point Cloud Library (PCL), you can install it by typing:
 
@@ -55,44 +57,37 @@ We will first test the algorithm on some examples. You will need at least three 
 
 *Terminal 1*
 
-
-Roscore.
-```
-cd catkin_ws
-source /opt/ros/noetic/setup.bash
-roscore
-```
-*Terminal 2*
-
 Publish stored example point cloud.
 ```
-cd catkin_ws
-source ~/catkin_ws/devel/setup.bash
-rosrun detect_graspable_points publish_pointcloud2
+cd ros2_ws
+source /opt/ros/foxy/setup.bash
+. install/setup.sh
+ros2 launch src/detect_graspable_points/launch/publish_pcd_launch.py
 ```
 Now, a point cloud in *.pcd* format will be published once per second as `sensor_msgs/PointCloud2` message under the topic `/merged_pcd` in the `regression_plane_frame` coordinate frame.
 
-*Terminal 3*
+*Terminal 2*
 
-Open RVIZ.
+Open RVIZ2.
 ```
-cd catkin_ws
-source ~/catkin_ws/devel/setup.bash
-roslaunch detect_graspable_points rviz.launch
+cd ros2_ws
+source /opt/ros/foxy/setup.bash
+ros2 run rviz2 rviz2
 ```
 You can freely choose which topic you want to visualize, whether that is the raw point cloud with the graspable points (light green spheres) or the color gradient of Graspability Score.
 
-*Terminal 4*
+*Terminal 3*
 
 Launch the graspable target detection.
 ```
-cd catkin_ws
-source ~/catkin_ws/devel/setup.bash
-roslaunch detect_graspable_points detect_graspable_points.launch
+cd ros2_ws
+source /opt/ros/foxy/setup.bash
+. install/setup.sh
+ros2 launch src/detect_graspable_points/launch/detect_graspable_points_launch.py
 ```
 The algorithm subscribes to a point cloud message `merged_pcd` in `sensor_msgs/PointCloud2` format. So in principle, you can subscribe to any tope
 
-Now you should see the point cloud showing up in RVIZ. 
+Now you should see the point cloud showing up in RVIZ2. 
 
 <img src="Images/HubRobo_leaning_bouldering_hold_with_legend.png" alt="drawing" width="600"/>
 
