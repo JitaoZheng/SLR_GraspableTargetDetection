@@ -152,4 +152,6 @@ The matching parameters are the most essential parameters for the graspability a
 
 ## Troubleshoot
 
-There won't be any problems. (end joke)
+### Curvature analysis crashes the program
+
+The function *detectTerrainPeaks()* kills the program because of unknown reasons, but one can still save the point cloud of the convex surfaces, and continue to process with them.
