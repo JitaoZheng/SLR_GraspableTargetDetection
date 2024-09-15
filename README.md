@@ -3,6 +3,8 @@ Geometry based graspable target detection for legged robots.
 
 Originated in the Space Robotics Lab (SRL) of the Tohoku University. Based on ClimbLab (Uno et al. 2022).
 
+For the Simulation Platform in CoppeliaSim/RVIZ2, check out the folder *coppelia_interface*.
+
 ## Authors and Maintainers
 
 *   Jitao Zheng (jitao.zheng@tum.de)
