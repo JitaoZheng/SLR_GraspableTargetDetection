@@ -32,7 +32,7 @@ private:
         pcl::PointCloud<pcl::PointXYZ> cloud;
         pcl::PointCloud<pcl::PointXYZRGB> peaks;
 
-        if (pcl::io::loadPCDFile<pcl::PointXYZ>("../ros2_ws/src/detect_graspable_points/pcd/graspability_map_linear_0.pcd", cloud) == -1) 
+        if (pcl::io::loadPCDFile<pcl::PointXYZ>("../ros2_ws/src/detect_graspable_points/pcd/graspability_map_artificial_rocks_pre-scanned.pcd", cloud) == -1) 
         {
             RCLCPP_ERROR(this->get_logger(), "Couldn't read merged point cloud file");
             return;
